@@ -107,7 +107,7 @@
     proxmox_vmid: "{{ ct_creation_result.vmid }}"
   when: ct_creation_result.vmid is defined
 
-- name: Wait for container to be created
+- name: Get Proxmox Container info
   delegate_to: localhost
   community.proxmox.proxmox_vm_info:
     api_host: "{{ proxmox_api_host }}"
@@ -118,7 +118,6 @@
     api_password: "{{ proxmox_api_password | default(omit) }}"
     node: "{{ proxmox_node }}"
     type: lxc
-  when: ct_creation_result.changed
   register: proxmox_vm_info
   retries: 5
   delay: 15
