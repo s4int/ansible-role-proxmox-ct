@@ -1,0 +1,18 @@
+---
+repos:
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v26.3.0
+    hooks:
+      - id: ansible-lint
+        name: ansible-lint
+        additional_dependencies:
+          - ansible
+        files: \.(yml|yaml)$
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.1
+    hooks:
+      - id: yamllint
+        name: yamllint
+        files: \.(yml|yaml)$
+        args: [-c=.yamllint]
