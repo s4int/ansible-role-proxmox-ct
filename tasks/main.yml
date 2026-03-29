@@ -1,6 +1,6 @@
 ---
-#list of available Proxmox Container templates can be found at:
-#/usr/bin/pveam available
+# list of available Proxmox Container templates can be found at:
+# /usr/bin/pveam available
 
 - name: Download Proxmox Container Template
   delegate_to: localhost
@@ -14,9 +14,11 @@
     node: "{{ proxmox_node }}"
     storage: "{{ proxmoc_ct_template_storage }}"
     content_type: vztmpl
-    template: "{{ proxmox_ct_ostemplate | regex_replace('^'+proxmoc_ct_template_storage+':vztmpl/', '') }}"
+    template: "{{ proxmox_ct_ostemplate | regex_replace('^' + proxmoc_ct_template_storage + ':vztmpl/', '') }}"
 
-- block:
+- name: Get Container vmid if not defined
+  when: proxmox_vmid is not defined
+  block:
     - name: Get Container vmid
       delegate_to: localhost
       community.proxmox.proxmox_vm_info:
@@ -35,16 +37,17 @@
       delay: 3
 
     - name: Set Proxmox Container vmid
-      set_fact:
-        proxmox_vmid: "{{ (proxmox_vm_info.proxmox_vms | selectattr('name', 'equalto', proxmox_ct_hostname) | list | first).vmid }}"
+      ansible.builtin.set_fact:
+        proxmox_vmid: "{{ (names | first).vmid }}"
+      vars:
+        names: "{{ proxmox_vm_info.proxmox_vms | selectattr('name', 'equalto', proxmox_ct_hostname) | list }}"
       when:
-        - (proxmox_vm_info.proxmox_vms | selectattr('name', 'equalto', proxmox_ct_hostname) | list) | length > 0
+        - names | length > 0
 
   rescue:
     - name: No container found
       ansible.builtin.debug:
         msg: "Container with hostname {{ proxmox_ct_hostname }} not found."
-  when: proxmox_vmid is not defined
 
 - name: Create mount points on host
   delegate_to: "{{ proxmox_node_host }}"
@@ -100,7 +103,7 @@
   delay: "{{ 15 | random(start=1) }}"
 
 - name: Set facts for Proxmox Container
-  set_fact:
+  ansible.builtin.set_fact:
     proxmox_vmid: "{{ ct_creation_result.vmid }}"
   when: ct_creation_result.vmid is defined
 
