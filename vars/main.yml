@@ -1,0 +1,2 @@
+---
+proxmox_ct_combined: "{{ proxmox_ct_default | combine(proxmox_ct) }}"
