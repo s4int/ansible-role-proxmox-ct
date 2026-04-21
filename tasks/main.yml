@@ -14,8 +14,9 @@
     node: "{{ proxmox_node }}"
     storage: "{{ proxmoc_ct_template_storage }}"
     content_type: vztmpl
-    template: "{{ proxmox_ct_ostemplate | regex_replace('^' +
-      proxmoc_ct_template_storage + ':vztmpl/', '') }}"
+    template: >
+      {{ proxmox_ct_combined['ostemplate'] |
+        regex_replace('^' + proxmoc_ct_template_storage + ':vztmpl/', '') }}
 
 - name: Get Container vmid if not defined
   when: proxmox_vmid is not defined
@@ -41,14 +42,16 @@
       ansible.builtin.set_fact:
         proxmox_vmid: "{{ (names | first).vmid }}"
       vars:
-        names: "{{ proxmox_vm_info.proxmox_vms | selectattr('name', 'equalto', proxmox_ct_hostname) | list }}"
+        names: >
+          {{ proxmox_vm_info.proxmox_vms |
+            selectattr('name', 'equalto', proxmox_ct_combined['hostname']) | list }}"
       when:
         - names | length > 0
 
   rescue:
     - name: No container found
       ansible.builtin.debug:
-        msg: "Container with hostname {{ proxmox_ct_hostname }} not found."
+        msg: "Container with hostname {{ proxmox_ct_combined['hostname'] }} not found."
 
 - name: Create mount points on host
   delegate_to: "{{ proxmox_node_host }}"
@@ -57,7 +60,9 @@
     state: directory
     recurse: true
   vars:
-    host_paths: "{{ proxmox_ct_mount_volumes | default([]) | map(attribute='host_path') | list }}"
+    host_paths: >
+      {{ proxmox_ct_combined['mount_volumes'] | default([]) |
+      map(attribute='host_path') | list }}
   loop: "{{ host_paths }}"
   loop_control:
     label: "{{ item }}"
@@ -88,7 +93,9 @@
   register: proxmox_vm_info
   retries: 5
   delay: 15
-  until: proxmox_ct_hostname in proxmox_vm_info.proxmox_vms | map(attribute='name') | list
+  until: >
+    proxmox_ct_combined['hostname'] in proxmox_vm_info.proxmox_vms |
+    map(attribute='name') | list
 
 - name: Set Proxmox Container Extra Configuration
   delegate_to: "{{ proxmox_node_host }}"
@@ -98,12 +105,13 @@
     search_string: "{{ item.regexp | default(omit) }}"
     insertafter: "{{ item.insertafter | default(omit) }}"
     insertbefore: "{{ item.insertbefore | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
     line: "{{ item.line }}"
-  loop: "{{ proxmox_ct_host_extra_config | default([]) }}"
+  loop: "{{ proxmox_ct_combined['host_extra_config'] | default([]) }}"
   when:
     - proxmox_vmid is defined
-    - proxmox_ct_host_extra_config is defined
-    - proxmox_ct_host_extra_config | length > 0
+    - proxmox_ct_combined['host_extra_config'] is defined
+    - proxmox_ct_combined['host_extra_config'] | length > 0
   register: ct_config_result
   notify: Restart Proxmox Container
 
