@@ -91,11 +91,13 @@
 
 - name: Set Proxmox Container Extra Configuration
   delegate_to: "{{ proxmox_node_host }}"
-  ansible.builtin.blockinfile:
+  ansible.builtin.lineinfile:
     path: "/etc/pve/lxc/{{ proxmox_vmid }}.conf"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR {{ item.marker_name }}"
-    block: "{{ item.extra_config | default('') }}"
-    insertafter: EOF
+    regexp: "{{ item.regexp | default(omit) }}"
+    search_string: "{{ item.regexp | default(omit) }}"
+    insertafter: "{{ item.insertafter | default(omit) }}"
+    insertbefore: "{{ item.insertbefore | default(omit) }}"
+    line: "{{ item.line }}"
   loop: "{{ proxmox_ct_host_extra_config | default([]) }}"
   when:
     - proxmox_vmid is defined
