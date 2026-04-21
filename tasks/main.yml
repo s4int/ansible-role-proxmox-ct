@@ -14,7 +14,8 @@
     node: "{{ proxmox_node }}"
     storage: "{{ proxmoc_ct_template_storage }}"
     content_type: vztmpl
-    template: "{{ proxmox_ct_ostemplate | regex_replace('^' + proxmoc_ct_template_storage + ':vztmpl/', '') }}"
+    template: "{{ proxmox_ct_ostemplate | regex_replace('^' +
+      proxmoc_ct_template_storage + ':vztmpl/', '') }}"
 
 - name: Get Container vmid if not defined
   when: proxmox_vmid is not defined
