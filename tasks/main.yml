@@ -14,7 +14,7 @@
     node: "{{ proxmox_node }}"
     storage: "{{ proxmoc_ct_template_storage }}"
     content_type: vztmpl
-    template: >
+    template: >-
       {{ proxmox_ct_combined['ostemplate'] |
         regex_replace('^' + proxmoc_ct_template_storage + ':vztmpl/', '') }}
 
@@ -42,7 +42,7 @@
       ansible.builtin.set_fact:
         proxmox_vmid: "{{ (names | first).vmid }}"
       vars:
-        names: >
+        names: >-
           {{ proxmox_vm_info.proxmox_vms |
             selectattr('name', 'equalto', proxmox_ct_combined['hostname']) | list }}"
       when:
@@ -60,7 +60,7 @@
     state: directory
     recurse: true
   vars:
-    host_paths: >
+    host_paths: >-
       {{ proxmox_ct_combined['mount_volumes'] | default([]) |
       map(attribute='host_path') | list }}
   loop: "{{ host_paths }}"
@@ -93,7 +93,7 @@
   register: proxmox_vm_info
   retries: 5
   delay: 15
-  until: >
+  until: >-
     proxmox_ct_combined['hostname'] in proxmox_vm_info.proxmox_vms |
     map(attribute='name') | list
 
