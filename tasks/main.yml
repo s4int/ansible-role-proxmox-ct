@@ -44,7 +44,7 @@
       vars:
         names: >-
           {{ proxmox_vm_info.proxmox_vms |
-            selectattr('name', 'equalto', proxmox_ct_combined['hostname']) | list }}"
+            selectattr('name', 'equalto', proxmox_ct_combined['hostname']) | list }}
       when:
         - names | length > 0
 
