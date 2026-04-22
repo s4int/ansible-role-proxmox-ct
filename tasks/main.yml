@@ -74,8 +74,7 @@
     recurse: true
   vars:
     host_paths: >-
-      {{ pct_mount_volumes | default([]) |
-      map(attribute='host_path') | list }}
+      {{ pct_mount_volumes | default([]) | map(attribute='host_path') | list }}
   loop: "{{ host_paths }}"
   loop_control:
     label: "{{ item }}"
@@ -157,15 +156,14 @@
   retries: 5
   delay: 15
   until: >-
-    pct_hostname in proxmox_vm_info.proxmox_vms |
-    map(attribute='name') | list
+    pct_hostname in proxmox_vm_info.proxmox_vms | map(attribute='name') | list
 
 - name: Set Proxmox Container Extra Configuration
   delegate_to: "{{ proxmox_node_host }}"
   ansible.builtin.lineinfile:
     path: "/etc/pve/lxc/{{ pct_vmid }}.conf"
     regexp: "{{ item.regexp | default(omit) }}"
-    search_string: "{{ item.regexp | default(omit) }}"
+    search_string: "{{ item.search_string | default(omit) }}"
     insertafter: "{{ item.insertafter | default(omit) }}"
     insertbefore: "{{ item.insertbefore | default(omit) }}"
     state: "{{ item.state | default('present') }}"
