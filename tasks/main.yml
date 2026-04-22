@@ -11,15 +11,22 @@
     api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
     api_timeout: "{{ proxmox_api_timeout | default(omit) }}"
     api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
-    api_token_secret: "{{ proxmox_api_token_secret  | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
     api_user: "{{ proxmox_api_user }}"
     ca_path: "{{ proxmox_ca_path | default(omit) }}"
     validate_certs: "{{ proxmox_validate_certs | default(omit) }}"
-    storage: "{{ proxmoc_ct_template_storage }}"
-    content_type: vztmpl
-    template: >-
-      {{ proxmox_ct_combined['ostemplate'] |
-        regex_replace('^' + proxmoc_ct_template_storage + ':vztmpl/', '') }}
+    checksum: "{{ item.checksum | default(omit) }}"
+    checksum_algorithm: "{{ item.checksum_algorithm | default(omit) }}"
+    force: "{{ item.force | default(omit) }}"
+    src: "{{ item.src | default(omit) }}"
+    state: "{{ item.state | default(omit) }}"
+    url: "{{ item.url | default(omit) }}"
+    storage: "{{ item.storage }}"
+    content_type: "{{ item.content_type | default('vztmpl') }}"
+    template: "{{ item.template }}"
+  loop: "{{ pveam_templates | default([]) }}"
+  loop_control:
+    label: "{{ item.template }}"
 
 - name: Get Container vmid if not defined
   when: pct_vmid is not defined
@@ -33,7 +40,7 @@
         api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
         api_timeout: "{{ proxmox_api_timeout | default(omit) }}"
         api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
-        api_token_secret: "{{ proxmox_api_token_secret  | default(omit) }}"
+        api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
         api_user: "{{ proxmox_api_user }}"
         ca_path: "{{ proxmox_ca_path | default(omit) }}"
         validate_certs: "{{ proxmox_validate_certs | default(omit) }}"
@@ -50,14 +57,14 @@
       vars:
         names: >-
           {{ proxmox_vm_info.proxmox_vms |
-            selectattr('name', 'equalto', proxmox_ct_combined['hostname']) | list }}
+            selectattr('name', 'equalto', pct_hostname) | list }}
       when:
         - names | length > 0
 
   rescue:
     - name: No container found
       ansible.builtin.debug:
-        msg: "Container with hostname {{ proxmox_ct_combined['hostname'] }} not found."
+        msg: "Container with hostname {{ pct_hostname }} not found."
 
 - name: Create mount points on host
   delegate_to: "{{ proxmox_node_host }}"
@@ -67,7 +74,7 @@
     recurse: true
   vars:
     host_paths: >-
-      {{ proxmox_ct_combined['mount_volumes'] | default([]) |
+      {{ pct_mount_volumes | default([]) |
       map(attribute='host_path') | list }}
   loop: "{{ host_paths }}"
   loop_control:
@@ -82,7 +89,7 @@
     api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
     api_timeout: "{{ proxmox_api_timeout | default(omit) }}"
     api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
-    api_token_secret: "{{ proxmox_api_token_secret  | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
     api_user: "{{ proxmox_api_user }}"
     ca_path: "{{ proxmox_ca_path | default(omit) }}"
     validate_certs: "{{ proxmox_validate_certs | default(omit) }}"
@@ -141,7 +148,7 @@
     api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
     api_timeout: "{{ proxmox_api_timeout | default(omit) }}"
     api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
-    api_token_secret: "{{ proxmox_api_token_secret  | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
     api_user: "{{ proxmox_api_user }}"
     ca_path: "{{ proxmox_ca_path | default(omit) }}"
     validate_certs: "{{ proxmox_validate_certs | default(omit) }}"
@@ -150,7 +157,7 @@
   retries: 5
   delay: 15
   until: >-
-    proxmox_ct_combined['hostname'] in proxmox_vm_info.proxmox_vms |
+    pct_hostname in proxmox_vm_info.proxmox_vms |
     map(attribute='name') | list
 
 - name: Set Proxmox Container Extra Configuration
@@ -163,11 +170,11 @@
     insertbefore: "{{ item.insertbefore | default(omit) }}"
     state: "{{ item.state | default('present') }}"
     line: "{{ item.line }}"
-  loop: "{{ proxmox_ct_combined['host_extra_config'] | default([]) }}"
+  loop: "{{ pct_extra_config | default([]) }}"
   when:
     - pct_vmid is defined
-    - proxmox_ct_combined['host_extra_config'] is defined
-    - proxmox_ct_combined['host_extra_config'] | length > 0
+    - pct_extra_config is defined
+    - pct_extra_config | length > 0
   register: ct_config_result
   notify: Restart Proxmox Container
 
@@ -180,7 +187,7 @@
     api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
     api_timeout: "{{ proxmox_api_timeout | default(omit) }}"
     api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
-    api_token_secret: "{{ proxmox_api_token_secret  | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
     api_user: "{{ proxmox_api_user }}"
     ca_path: "{{ proxmox_ca_path | default(omit) }}"
     validate_certs: "{{ proxmox_validate_certs | default(omit) }}"
@@ -198,7 +205,7 @@
     api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
     api_timeout: "{{ proxmox_api_timeout | default(omit) }}"
     api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
-    api_token_secret: "{{ proxmox_api_token_secret  | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
     api_user: "{{ proxmox_api_user }}"
     ca_path: "{{ proxmox_ca_path | default(omit) }}"
     validate_certs: "{{ proxmox_validate_certs | default(omit) }}"

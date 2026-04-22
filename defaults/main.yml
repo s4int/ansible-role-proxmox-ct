@@ -1,19 +1,2 @@
 ---
 proxmox_api_port_default: 8006
-proxmox_ct_default:
-  api_host: "{{ proxmox_api_host | default(omit) }}"
-  api_user: "{{ proxmox_api_user | default(omit) }}"
-  api_password: "{{ proxmox_api_password | default(omit) }}"
-  api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
-  api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
-  api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
-
-# OS and Template Configuration
-proxmox_ct_ostemplate_default: "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
-proxmox_ct_ostype_default: auto
-
-# Network Configuration
-proxmox_ct_netif_default:
-  net0: "name=eth0,ip=dhcp,ip6=dhcp,bridge=vmbr0,firewall=0"
-
-proxmoc_ct_template_storage: local
