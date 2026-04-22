@@ -12,5 +12,5 @@
     api_user: "{{ proxmox_api_user }}"
     ca_path: "{{ proxmox_ca_path | default(omit) }}"
     validate_certs: "{{ proxmox_validate_certs | default(omit) }}"
-    vmid: "{{ proxmox_vmid }}"
+    vmid: "{{ pct_vmid }}"
     state: restarted
