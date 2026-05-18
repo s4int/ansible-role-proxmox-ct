@@ -2,7 +2,7 @@
 galaxy_info:
   role_name: proxmox_ct
   author: s4int
-  description: Manage Proxmox Containers.
+  description: Ansible role to create and manage Proxmox Containers (LXC).
   license: "license (BSD, MIT)"
   min_ansible_version: 2.20.1
   galaxy_tags:

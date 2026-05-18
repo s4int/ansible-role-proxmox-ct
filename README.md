@@ -148,6 +148,15 @@ pct_mount_volumes:
     size: 10
 ```
 
+Mount directory from host to container:
+
+```yaml
+pct_mount_volumes:
+  - id: mp0
+    mountpoint: /mnt/data
+    host_path: /mnt/data
+```
+
 ## Usage
 
 1. Ensure your Proxmox server is accessible and you have API credentials
