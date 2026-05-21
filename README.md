@@ -74,8 +74,9 @@ The following variables map directly to the `community.proxmox.proxmox` module p
 
 #### Network & DNS
 
-- `pct_netif`: Dictionary configuring network interfaces (e.g., `net0: "name=eth0,ip=dhcp,bridge=vmbr0"`).
-- `pct_ip_address`: Specifies the address the container will be assigned (if not using `pct_netif`).
+- `pct_netif`: Dictionary configuring network interfaces using raw Proxmox configuration strings (e.g., `net0: "name=eth0,ip=dhcp,bridge=vmbr0"`).
+- `pct_netif_dict`: A structured alternative to `pct_netif`. A dictionary of dictionaries where network interface options are specified as key-value pairs (e.g., `bridge`, `ip`, `gw`, etc.). It dynamically renders into the format required by Proxmox.
+- `pct_ip_address`: Specifies the address the container will be assigned (if not using `pct_netif` or `pct_netif_dict`).
 - `pct_nameserver`: DNS server IP address for the container.
 - `pct_searchdomain`: DNS search domain for the container.
 
@@ -121,12 +122,46 @@ The following variables map directly to the `community.proxmox.proxmox` module p
 
 ### Custom Network Configuration
 
-You can define network settings with the `pct_netif` variable:
+You can define network settings using the raw `pct_netif` variable:
 
 ```yaml
 pct_netif:
   net0: "name=eth0,ip=dhcp,ip6=dhcp,bridge=vmbr0,firewall=0"
 ```
+
+Alternatively, you can use the more structured `pct_netif_dict` variable, which is automatically compiled into the format required by Proxmox. This avoids writing comma-separated strings manually:
+
+```yaml
+pct_netif_dict:
+  net0:
+    name: eth0
+    bridge: vmbr0
+    ip: dhcp
+    firewall: 0
+  net1:
+    name: eth1
+    bridge: vmbr1
+    ip: 192.168.10.15/24
+    gw: 192.168.10.1
+    firewall: 1
+```
+
+Supported keys under each interface in `pct_netif_dict` include:
+- `name` (the interface name inside the container, e.g., `eth0`)
+- `bridge` (the Proxmox bridge to attach the interface to, e.g., `vmbr0`)
+- `ip` (IPv4 address in CIDR format or `dhcp`)
+- `gw` (default gateway for IPv4)
+- `ip6` (IPv6 address in CIDR format or `dhcp`)
+- `gw6` (default gateway for IPv6)
+- `firewall` (enable/disable firewall rules, `1` or `0`)
+- `link_down` (whether the link is down/plug pulled, `1` or `0`)
+- `type` (interface type, e.g., `veth`)
+- `hwaddr` (MAC address)
+- `mtu` (MTU size)
+- `rate` (rate limit in MB/s)
+- `tag` (VLAN tag)
+- `host-managed` (manage IP configuration via host)
+
 
 ### Custom Container Features
 
