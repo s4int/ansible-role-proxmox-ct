@@ -1,4 +1,4 @@
-# Proxmox Container Role
+# proxmox_ct - Proxmox Container Role
 
 This Ansible role creates and configures a Proxmox Container (LXC).
 
@@ -147,6 +147,7 @@ pct_netif_dict:
 ```
 
 Supported keys under each interface in `pct_netif_dict` include:
+
 - `name` (the interface name inside the container, e.g., `eth0`)
 - `bridge` (the Proxmox bridge to attach the interface to, e.g., `vmbr0`)
 - `ip` (IPv4 address in CIDR format or `dhcp`)
@@ -161,7 +162,6 @@ Supported keys under each interface in `pct_netif_dict` include:
 - `rate` (rate limit in MB/s)
 - `tag` (VLAN tag)
 - `host-managed` (manage IP configuration via host)
-
 
 ### Custom Container Features
 
