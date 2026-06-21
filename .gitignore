@@ -1,0 +1,15 @@
+# Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+.python.version
+.vault_pass_file
+*.iml
+.ansible/
+.idea/
+__pycache__/

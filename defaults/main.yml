@@ -1,0 +1,37 @@
+---
+proxmox_api_port_default: 8006
+
+# Network interface dictionary
+pct_netif_dict: {}
+
+# Default network interface configuration
+netif_default:
+  # Whether this interface should be disconnected (like pulling the plug).
+  link_down:
+  # Network interface type.
+  type:
+  # Bridge to attach the network device to.
+  bridge:
+  # A common MAC address with the I/G (Individual/Group) bit not set.
+  hwaddr:
+  # Maximum transfer unit of the interface. (lxc.network.mtu)
+  mtu:
+  # IPv4 address in CIDR format.
+  ip:
+  # Default gateway for IPv4 traffic.
+  gw:
+  # IPv6 address in CIDR format.
+  ip6:
+  # Default gateway for IPv6 traffic.
+  gw6:
+  # Controls whether this interface’s firewall rules should be used.
+  firewall:
+  # Apply rate limiting to the interface
+  rate:
+  # VLAN tag for this interface.
+  tag:
+  # Whether this interface’s IP configuration should be managed by the host.
+  host-managed:
+
+# trunks=<vlanid[;vlanid...]>
+# VLAN ids to pass through the interface

@@ -1,0 +1,9 @@
+---
+pct_netif: >-
+  {%- set result = {} -%}
+  {%- for k, v in pct_netif_dict.items() -%}
+    {%- set merged = netif_default | combine(v) -%}
+    {%- set filtered = merged | dict2items | rejectattr('value', 'none') | items2dict -%}
+    {%- set _ = result.update({k: filtered.items() | map('join', '=') | join(',')}) -%}
+  {%- endfor -%}
+  {{ result }}

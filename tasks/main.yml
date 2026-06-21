@@ -1,0 +1,216 @@
+---
+# list of available Proxmox Container templates can be found at:
+# /usr/bin/pveam available
+
+- name: Download Proxmox Container Template
+  delegate_to: localhost
+  community.proxmox.proxmox_template:
+    api_host: "{{ proxmox_api_host }}"
+    node: "{{ proxmox_node | default(omit) }}"
+    api_password: "{{ proxmox_api_password | default(omit) }}"
+    api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
+    api_timeout: "{{ proxmox_api_timeout | default(omit) }}"
+    api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
+    api_user: "{{ proxmox_api_user }}"
+    ca_path: "{{ proxmox_ca_path | default(omit) }}"
+    validate_certs: "{{ proxmox_validate_certs | default(omit) }}"
+    checksum: "{{ item.checksum | default(omit) }}"
+    checksum_algorithm: "{{ item.checksum_algorithm | default(omit) }}"
+    force: "{{ item.force | default(omit) }}"
+    src: "{{ item.src | default(omit) }}"
+    state: "{{ item.state | default(omit) }}"
+    url: "{{ item.url | default(omit) }}"
+    storage: "{{ item.storage }}"
+    content_type: "{{ item.content_type | default('vztmpl') }}"
+    template: "{{ item.template }}"
+  loop: "{{ pveam_templates | default([]) }}"
+  loop_control:
+    label: "{{ item.template }}"
+
+- name: Get Container vmid if not defined
+  when: pct_vmid is not defined
+  block:
+    - name: Get Container vmid
+      delegate_to: localhost
+      community.proxmox.proxmox_vm_info:
+        api_host: "{{ proxmox_api_host }}"
+        node: "{{ proxmox_node | default(omit) }}"
+        api_password: "{{ proxmox_api_password | default(omit) }}"
+        api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
+        api_timeout: "{{ proxmox_api_timeout | default(omit) }}"
+        api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
+        api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
+        api_user: "{{ proxmox_api_user }}"
+        ca_path: "{{ proxmox_ca_path | default(omit) }}"
+        validate_certs: "{{ proxmox_validate_certs | default(omit) }}"
+        type: lxc
+      register: proxmox_vm_info
+      when:
+        - pct_vmid is not defined
+      retries: 3
+      delay: 3
+
+    - name: Set Proxmox Container vmid
+      ansible.builtin.set_fact:
+        pct_vmid: "{{ (names | first).vmid }}"
+      vars:
+        names: >-
+          {{ proxmox_vm_info.proxmox_vms |
+            selectattr('name', 'equalto', pct_hostname) | list }}
+      when:
+        - names | length > 0
+
+  rescue:
+    - name: No container found
+      ansible.builtin.debug:
+        msg: "Container with hostname {{ pct_hostname }} not found."
+
+- name: Create mount points on host
+  delegate_to: "{{ proxmox_node_host }}"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    recurse: true
+  vars:
+    host_paths: >-
+      {{ pct_mount_volumes | default([]) | map(attribute='host_path') | list }}
+  loop: "{{ host_paths }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Create Proxmox Container
+  delegate_to: localhost
+  community.proxmox.proxmox:
+    api_host: "{{ proxmox_api_host }}"
+    node: "{{ proxmox_node | default(omit) }}"
+    api_password: "{{ proxmox_api_password | default(omit) }}"
+    api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
+    api_timeout: "{{ proxmox_api_timeout | default(omit) }}"
+    api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
+    api_user: "{{ proxmox_api_user }}"
+    ca_path: "{{ proxmox_ca_path | default(omit) }}"
+    validate_certs: "{{ proxmox_validate_certs | default(omit) }}"
+    clone: "{{ pct_clone | default(omit) }}"
+    clone_type: "{{ pct_clone_type | default(omit) }}"
+    cores: "{{ pct_cores | default(omit) }}"
+    cpus: "{{ pct_cpus | default(omit) }}"
+    cpuunits: "{{ pct_cpuunits | default(omit) }}"
+    delete: "{{ pct_delete | default(omit) }}"
+    description: "{{ pct_description | default(omit) }}"
+    disk: "{{ pct_disk | default(omit) }}"
+    disk_volume: "{{ pct_disk_volume | default(omit) }}"
+    features: "{{ pct_features | default(omit) }}"
+    force: "{{ pct_force | default(omit) }}"
+    hookscript: "{{ pct_hookscript | default(omit) }}"
+    hostname: "{{ pct_hostname }}"
+    ip_address: "{{ pct_ip_address | default(omit) }}"
+    memory: "{{ pct_memory | default(omit) }}"
+    mount_volumes: "{{ pct_mount_volumes | default(omit) }}"
+    mounts: "{{ pct_mounts | default(omit) }}"
+    nameserver: "{{ pct_nameserver | default(omit) }}"
+    netif: "{{ pct_netif | default(omit) }}"
+    onboot: "{{ pct_onboot | default(omit) }}"
+    ostemplate: "{{ pct_ostemplate | default(omit) }}"
+    ostype: "{{ pct_ostype | default(omit) }}"
+    password: "{{ pct_password }}"
+    pool: "{{ pct_pool | default(omit) }}"
+    pubkey: "{{ pct_pubkey | default(omit) }}"
+    purge: "{{ pct_purge | default(omit) }}"
+    searchdomain: "{{ pct_searchdomain | default(omit) }}"
+    startup: "{{ pct_startup | default(omit) }}"
+    state: "{{ pct_state | default(omit) }}"
+    storage: "{{ pct_storage | default(omit) }}"
+    swap: "{{ pct_swap | default(omit) }}"
+    tags: "{{ pct_tags | default(omit) }}"
+    timeout: "{{ pct_timeout | default(omit) }}"
+    timezone: "{{ pct_timezone | default(omit) }}"
+    unprivileged: "{{ pct_unprivileged | default(omit) }}"
+    update: "{{ pct_update | default(omit) }}"
+    vmid: "{{ pct_vmid | default(omit) }}"
+  register: ct_creation_result
+  retries: 5
+  delay: "{{ 15 | random(start=1) }}"
+
+- name: Set facts for Proxmox Container
+  ansible.builtin.set_fact:
+    pct_vmid: "{{ ct_creation_result.vmid }}"
+  when: ct_creation_result.vmid is defined
+
+- name: Get Proxmox Container info
+  delegate_to: localhost
+  community.proxmox.proxmox_vm_info:
+    api_host: "{{ proxmox_api_host }}"
+    node: "{{ proxmox_node | default(omit) }}"
+    api_password: "{{ proxmox_api_password | default(omit) }}"
+    api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
+    api_timeout: "{{ proxmox_api_timeout | default(omit) }}"
+    api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
+    api_user: "{{ proxmox_api_user }}"
+    ca_path: "{{ proxmox_ca_path | default(omit) }}"
+    validate_certs: "{{ proxmox_validate_certs | default(omit) }}"
+    type: lxc
+  register: proxmox_vm_info
+  retries: 5
+  delay: 15
+  until: >-
+    pct_hostname in proxmox_vm_info.proxmox_vms | map(attribute='name') | list
+
+- name: Set Proxmox Container Extra Configuration
+  delegate_to: "{{ proxmox_node_host }}"
+  ansible.builtin.lineinfile:
+    path: "/etc/pve/lxc/{{ pct_vmid }}.conf"
+    regexp: "{{ item.regexp | default(omit) }}"
+    search_string: "{{ item.search_string | default(omit) }}"
+    insertafter: "{{ item.insertafter | default(omit) }}"
+    insertbefore: "{{ item.insertbefore | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+    line: "{{ item.line }}"
+  loop: "{{ pct_extra_config | default([]) }}"
+  when:
+    - pct_vmid is defined
+    - pct_extra_config is defined
+    - pct_extra_config | length > 0
+  register: ct_config_result
+  notify: Restart Proxmox Container
+
+- name: Start Proxmox Container
+  delegate_to: localhost
+  community.proxmox.proxmox:
+    api_host: "{{ proxmox_api_host }}"
+    node: "{{ proxmox_node | default(omit) }}"
+    api_password: "{{ proxmox_api_password | default(omit) }}"
+    api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
+    api_timeout: "{{ proxmox_api_timeout | default(omit) }}"
+    api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
+    api_user: "{{ proxmox_api_user }}"
+    ca_path: "{{ proxmox_ca_path | default(omit) }}"
+    validate_certs: "{{ proxmox_validate_certs | default(omit) }}"
+    vmid: "{{ pct_vmid }}"
+    state: started
+  when:
+    - pct_vmid is defined
+
+- name: Wait for Proxmox Container to be ready
+  delegate_to: localhost
+  community.proxmox.proxmox_vm_info:
+    api_host: "{{ proxmox_api_host }}"
+    node: "{{ proxmox_node | default(omit) }}"
+    api_password: "{{ proxmox_api_password | default(omit) }}"
+    api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
+    api_timeout: "{{ proxmox_api_timeout | default(omit) }}"
+    api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
+    api_user: "{{ proxmox_api_user }}"
+    ca_path: "{{ proxmox_ca_path | default(omit) }}"
+    validate_certs: "{{ proxmox_validate_certs | default(omit) }}"
+    type: lxc
+    vmid: "{{ pct_vmid }}"
+  register: proxmox_vm_info
+  retries: 5
+  delay: 15
+  until: proxmox_vm_info.proxmox_vms[0].status == 'running'
+  when: not ansible_check_mode

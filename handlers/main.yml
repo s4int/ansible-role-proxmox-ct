@@ -1,0 +1,16 @@
+---
+- name: Restart Proxmox Container
+  delegate_to: localhost
+  community.proxmox.proxmox:
+    api_host: "{{ proxmox_api_host }}"
+    node: "{{ proxmox_node | default(omit) }}"
+    api_password: "{{ proxmox_api_password | default(omit) }}"
+    api_port: "{{ proxmox_api_port | default(proxmox_api_port_default) }}"
+    api_timeout: "{{ proxmox_api_timeout | default(omit) }}"
+    api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
+    api_user: "{{ proxmox_api_user }}"
+    ca_path: "{{ proxmox_ca_path | default(omit) }}"
+    validate_certs: "{{ proxmox_validate_certs | default(omit) }}"
+    vmid: "{{ pct_vmid }}"
+    state: restarted
